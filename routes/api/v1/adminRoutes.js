@@ -3,6 +3,7 @@ const adminCtl = require('../../../controller/api/v1/adminCtl');
 const Admin = require('../../../models/AdminModel');
 const {check} = require('express-validator');
 const router = express.Router();
+const passport = require('passport');
 
 router.post('/adminRegister',[
     check('username').notEmpty().withMessage('Username is required').isLength({min:2}).withMessage('username must be atleast 2 carectore'),
@@ -23,5 +24,21 @@ router.post('/adminRegister',[
 
 
 router.post('/adminLogin',adminCtl.adminLogin);
+
+router.all('/faliurRedirect',async(req,res)=>{
+    try {
+        return res.status(403).json({msg:"Invalid Token"});
+    } catch (err) {
+        return res.status(400).json({msg:'Something Wrong'});
+    }
+});
+
+router.get('/adminProfile',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.adminProfile);
+
+router.put('/editAdminProfile/:id',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.editAdminProfile);
+
+router.post('/chnageAdminPassword',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.chnageAdminPassword);
+
+router.get('/adminLogOut',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.adminLogOut);
 
 module.exports = router;
