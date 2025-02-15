@@ -1,10 +1,11 @@
 const express = require('express');
 const adminCtl = require('../../../../controller/api/v1/adminCtl');
 const Admin = require('../../../../models/AdminModel');
+const Faculty = require('../../../../models/FacultyModel');
+const Accountant = require('../../../../models/AccountantModel');
 const {check} = require('express-validator');
 const router = express.Router();
 const passport = require('passport');
-const Faculty = require('../../../../models/FacultyModel');
 
 router.post('/adminRegister',[
     check('username').notEmpty().withMessage('Username is required').isLength({min:2}).withMessage('username must be atleast 2 carectore'),
@@ -52,11 +53,22 @@ router.post('/forgetPassword/:email',adminCtl.forgetPassword);
 router.post('/addFaculty',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),[
     check('username').notEmpty().withMessage('Username is required').isLength({min:2}).withMessage('username must be atleast 2 carectore'),
     check('email').notEmpty().withMessage('email is required').isEmail().withMessage('Invalid Email').custom(async value=>{
-        const isExistAdmin = await Faculty.findOne({email:value});
-        if(isExistAdmin){
+        const isExistFaculty = await Faculty.findOne({email:value});
+        if(isExistFaculty){
             throw new Error('This Email is Already Exist');
         }
     }),
 ],adminCtl.addFaculty);
+
+// ADD accountant 
+router.post('/addAccoutant',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),[
+    check('username').notEmpty().withMessage('Username is required').isLength({min:2}).withMessage('username must be atleast 2 carectore'),
+    check('email').notEmpty().withMessage('email is required').isEmail().withMessage('Invalid Email').custom(async value=>{
+        const isExistAccountant = await Accountant.findOne({email:value});
+        if(isExistAccountant){
+            throw new Error('This Email is Already Exist');
+        }
+    }),
+],adminCtl.addAccoutant);
 
 module.exports = router;

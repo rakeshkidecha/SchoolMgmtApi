@@ -4,6 +4,7 @@ const ExtractJwt = require('passport-jwt').ExtractJwt;
 const env = require('dotenv').config();
 const Admin = require('../models/AdminModel');
 const Faculty = require('../models/FacultyModel');
+const Accountant = require('../models/AccountantModel');
 
 const opts = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -30,6 +31,20 @@ passport.use('faculty',new jwtStrategy(opts,async(payload,done)=>{
         const isExistFaculty = await Faculty.findById(payload.facultyData.id);
         if(isExistFaculty){
             return done(null,isExistFaculty);
+        }else{
+            return done(null,false);
+        }
+    }else{
+        return done(null,false);
+    }
+}));
+
+// Accountant login strategy 
+passport.use('accountant',new jwtStrategy(opts,async(payload,done)=>{
+    if(payload.accountantData){
+        const isExistAccountant = await Accountant.findById(payload.accountantData.id);
+        if(isExistAccountant){
+            return done(null,isExistAccountant);
         }else{
             return done(null,false);
         }

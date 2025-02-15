@@ -5,6 +5,7 @@ const env = require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Faculty = require('../../../models/FacultyModel');
+const Accountant = require('../../../models/AccountantModel');
 
 function passwordGanreter(){
     const str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
@@ -219,8 +220,49 @@ module.exports.addFaculty = async(req,res)=>{
                 <p>Login Link : ${req.body.facultyLoginLink} </p>
             `
             const info =await sendMailer(addedFaculty.email,sub,content);
+            if(info){
+                return res.status(200).json({msg:"Check Your Email For Login"});
+            }else{
+                return res.status(400).json({msg:"Failed to Send Email"});
+            }
+        }else{
+            return res.status(400).json({msg:'Faculty not added'});
+        }
 
-            return res.status(200).json({msg:"Check Your Email For Login"});
+    } catch (err) {
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+};
+
+// add Accountant 
+module.exports.addAccoutant = async(req,res)=>{
+    try {
+
+        const pass = passwordGanreter();
+        req.body.password = await bcrypt.hash(pass,10);
+        req.body.adminId = req.user._id;
+
+        const addedAccountant = await Accountant.create(req.body);
+
+        if(addedAccountant){
+            // add faculty id to admin 
+            const singleAdmin = await Admin.findById(addedAccountant.adminId);
+            singleAdmin.accountantIds.push(addedAccountant._id);
+            await Admin.findByIdAndUpdate(singleAdmin._id,singleAdmin);
+
+            const sub = 'Login Information';
+            const content = `
+                <h1>Your Login Information</h1>
+                <p>Email : ${addedAccountant.email}</p>
+                <p>Email : ${pass}</p>
+                <p>Login Link : ${req.body.accountantLoginLink} </p>
+            `
+            const info = await sendMailer(addedAccountant.email,sub,content);
+            if(info){
+                return res.status(200).json({msg:"Check Your Email For Login"});
+            }else{
+                return res.status(400).json({msg:"Failed to Send Email"});
+            }
         }else{
             return res.status(400).json({msg:'Faculty not added'});
         }

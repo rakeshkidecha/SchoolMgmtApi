@@ -12,7 +12,7 @@ module.exports.facultyLogin = async (req,res)=>{
         }
 
         if(await bcrypt.compare(req.body.password,isExistFaculty.password)){
-            const facultyToken = await jwt.sign({facultyData:{id:isExistFaculty._id}},process.env.JWT_SECRET_KEY);
+            const facultyToken = await jwt.sign({facultyData:{id:isExistFaculty._id}},process.env.JWT_SECRET_KEY,{expiresIn:'1d'});
             return res.status(200).json({message:"Faculty Login Successfully",token:facultyToken});
         }else{
             return res.status(403).json({msg:"Invalid Password"});
@@ -55,7 +55,7 @@ module.exports.changeFacultyPassword = async(req,res)=>{
     try {
         const isExistFaculty = await Faculty.findById(req.user._id);
         if(!isExistFaculty){
-            return res.status(404).json('Faculty not Exist'); 
+            return res.status(404).json({msg:'Faculty not Exist'}); 
         }
 
         if(!await bcrypt.compare(req.body.oldPassword,isExistFaculty.password)){
