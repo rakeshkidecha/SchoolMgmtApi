@@ -3,16 +3,36 @@ const jwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const env = require('dotenv').config();
 const Admin = require('../models/AdminModel');
+const Faculty = require('../models/FacultyModel');
 
 const opts = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: process.env.JWT_SECRET_KEY
 };
 
+// admin login strategy 
 passport.use(new jwtStrategy(opts,async(payload,done)=>{
-    const isExistAdmin = await Admin.findById(payload.adminData.id);
-    if(isExistAdmin){
-        return done(null,isExistAdmin);
+    if(payload.adminData){
+        const isExistAdmin = await Admin.findById(payload.adminData.id);
+        if(isExistAdmin){
+            return done(null,isExistAdmin);
+        }else{
+            return done(null,false);
+        }
+    }else{
+        return done(null,false);
+    }
+}));
+
+// faculty login strategy 
+passport.use('faculty',new jwtStrategy(opts,async(payload,done)=>{
+    if(payload.facultyData){
+        const isExistFaculty = await Faculty.findById(payload.facultyData.id);
+        if(isExistFaculty){
+            return done(null,isExistFaculty);
+        }else{
+            return done(null,false);
+        }
     }else{
         return done(null,false);
     }

@@ -1,8 +1,20 @@
 const Admin = require('../../../models/AdminModel');
 const {validationResult} = require('express-validator');
+const sendMailer = require('../../../services/sendMailer');
 const env = require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const Faculty = require('../../../models/FacultyModel');
+
+function passwordGanreter(){
+    const str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
+    let pass = '';
+    for(let i =0 ;i<8;i++){
+        pass += str.charAt(Math.floor(Math.random()*str.length)+1);
+    };
+
+    return pass;
+}
 
 module.exports.registerAdmin = async(req,res)=>{
     try {
@@ -119,6 +131,100 @@ module.exports.adminLogOut = async(req,res)=>{
 
             return res.status(200).json({msg:'Go To Login'});
         })
+    } catch (err) {
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+};
+
+// forget password 
+module.exports.sendOtp = async(req,res)=>{
+    try {
+        const isExistEmail = await Admin.findOne({email:req.body.email});
+
+        let OTP;
+        do {
+          OTP = Math.ceil(Math.random()*10000);  
+        } while (OTP.toString().length != 4);
+
+        if(isExistEmail){
+            const sub = "Verification OTP";
+            const content =  `<p>Your OTP for forget password is <b>${OTP}</b></p>`;
+
+            const info = await sendMailer(isExistEmail.email,sub,content);
+            
+            if(info){
+                return res.status(200).json({msg:"OTP Send on mail Successfully",data:{email:isExistEmail.email,OTP}})
+            }else{
+                return res.status(400).json({msg:'Mail not send'});
+            }
+
+
+        }else{
+            return res.status(400).json({msg:'Invalid Email'});
+        }
+
+    } catch (err) {
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+};
+
+module.exports.forgetPassword = async(req,res)=>{
+    try {
+        const isExistEmail = await Admin.findOne({email:req.params.email});
+        if(isExistEmail){
+            if(req.body.newPassword == req.body.confirmPassword){
+                const newPass = await bcrypt.hash(req.body.newPassword,10);
+                const updatePass = await Admin.findByIdAndUpdate(isExistEmail._id,{password:newPass});
+                if(updatePass){
+                    return res.status(200).json({msg:"Password updated, Go to Login"});
+                }else{
+                    return res.status(400).json({msg:'Password not updated'});
+                }
+            }else{
+                return res.status(400).json({msg:"New and Confirm Passsword are not Match"});
+            }
+        }else{
+            return res.status(400).json({msg:'Invalid Email'});
+        }
+    } catch (err) {
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+};
+
+
+// add faculty /
+module.exports.addFaculty = async(req,res)=>{
+    try {
+        const errors = validationResult(req);
+        if(!errors.isEmpty()){
+            return res.status(403).json({msg:"Invalid Credential",errors:errors.mapped()});
+        }
+
+        const pass = passwordGanreter()
+        req.body.password = await bcrypt.hash(pass,10);
+        req.body.adminId = req.user._id;
+
+        const addedFaculty = await Faculty.create(req.body);
+        if(addedFaculty){
+            // add faculty id to admin 
+            const singleAdmin = await Admin.findById(addedFaculty.adminId);
+            singleAdmin.facultyIds.push(addedFaculty._id);
+            await Admin.findByIdAndUpdate(singleAdmin._id,singleAdmin);
+
+            const sub = 'Login Information';
+            const content = `
+                <h1>Your Login Information</h1>
+                <p>Email : ${addedFaculty.email}</p>
+                <p>Email : ${pass}</p>
+                <p>Login Link : ${req.body.facultyLoginLink} </p>
+            `
+            const info =await sendMailer(addedFaculty.email,sub,content);
+
+            return res.status(200).json({msg:"Check Your Email For Login"});
+        }else{
+            return res.status(400).json({msg:'Faculty not added'});
+        }
+
     } catch (err) {
         return res.status(400).json({msg:'Something Wrong',errors:err});
     }

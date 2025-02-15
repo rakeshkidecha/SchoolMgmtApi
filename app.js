@@ -22,6 +22,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use('/api',require('./routes/api/v1/adminRoutes'));
+app.use('/api/faculty',require('./routes/api/v1/facultyRoutes'));
 
 
 app.listen(process.env.PORT,err=>console.log(err?err:"Server run on http://localhost:"+process.env.PORT));

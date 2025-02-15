@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const adminSchema = mongoose.Schema({
+const facultySchema = mongoose.Schema({
     username:{
         type:String,
         required:true
@@ -15,16 +15,13 @@ const adminSchema = mongoose.Schema({
     },
     role:{
         type:String,
-        default:'admin'
+        default:'faculty'
     },
-    facultyIds:[{
+    adminId:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:'Faculty'
-    }],
-    accountantIds:[{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'Accountant'
-    }],
+        ref:'Admin',
+        required:true
+    },
     status:{
         type:Boolean,
         default:true
@@ -32,6 +29,6 @@ const adminSchema = mongoose.Schema({
 },{timestamps:true});
 
 
-const Admin = mongoose.model('Admin',adminSchema);
+const Faculty = mongoose.model('Faculty',facultySchema);
 
-module.exports = Admin;
+module.exports = Faculty;

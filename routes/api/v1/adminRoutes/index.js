@@ -1,9 +1,10 @@
 const express = require('express');
-const adminCtl = require('../../../controller/api/v1/adminCtl');
-const Admin = require('../../../models/AdminModel');
+const adminCtl = require('../../../../controller/api/v1/adminCtl');
+const Admin = require('../../../../models/AdminModel');
 const {check} = require('express-validator');
 const router = express.Router();
 const passport = require('passport');
+const Faculty = require('../../../../models/FacultyModel');
 
 router.post('/adminRegister',[
     check('username').notEmpty().withMessage('Username is required').isLength({min:2}).withMessage('username must be atleast 2 carectore'),
@@ -40,5 +41,22 @@ router.put('/editAdminProfile/:id',passport.authenticate('jwt',{failureRedirect:
 router.post('/chnageAdminPassword',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.chnageAdminPassword);
 
 router.get('/adminLogOut',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.adminLogOut);
+
+// forget password 
+router.post('/sendOtp',adminCtl.sendOtp);
+
+router.post('/forgetPassword/:email',adminCtl.forgetPassword);
+
+
+// add faculty 
+router.post('/addFaculty',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),[
+    check('username').notEmpty().withMessage('Username is required').isLength({min:2}).withMessage('username must be atleast 2 carectore'),
+    check('email').notEmpty().withMessage('email is required').isEmail().withMessage('Invalid Email').custom(async value=>{
+        const isExistAdmin = await Faculty.findOne({email:value});
+        if(isExistAdmin){
+            throw new Error('This Email is Already Exist');
+        }
+    }),
+],adminCtl.addFaculty);
 
 module.exports = router;
