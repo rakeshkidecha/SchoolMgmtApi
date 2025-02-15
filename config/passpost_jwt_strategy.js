@@ -5,6 +5,7 @@ const env = require('dotenv').config();
 const Admin = require('../models/AdminModel');
 const Faculty = require('../models/FacultyModel');
 const Accountant = require('../models/AccountantModel');
+const Student = require('../models/StudentModel');
 
 const opts = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -45,6 +46,20 @@ passport.use('accountant',new jwtStrategy(opts,async(payload,done)=>{
         const isExistAccountant = await Accountant.findById(payload.accountantData.id);
         if(isExistAccountant){
             return done(null,isExistAccountant);
+        }else{
+            return done(null,false);
+        }
+    }else{
+        return done(null,false);
+    }
+}));
+
+// Student login strategy 
+passport.use('student',new jwtStrategy(opts,async(payload,done)=>{
+    if(payload.studentData){
+        const isExistStudent = await Student.findById(payload.studentData.id);
+        if(isExistStudent){
+            return done(null,isExistStudent);
         }else{
             return done(null,false);
         }
