@@ -5,6 +5,7 @@ const env = require('dotenv').config();
 const sendMailer = require('../../../services/sendMailer');
 const { validationResult } = require("express-validator");
 const Student = require("../../../models/StudentModel");
+const common = require('../../../services/common');
 
 function passwordGanreter(){
     const str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
@@ -201,5 +202,40 @@ module.exports.addStudent = async(req,res)=>{
     } catch (err) {
         console.log(err);
         return res.status(400).json({msg:"Something Wrong",errors:err});
+    }
+};
+
+module.exports.viewStudent  = async(req,res)=>{
+    try {
+        const allStudent = await Student.find({accountantId:req.user._id});
+        if(allStudent){
+            return res.status(200).json({msg:"Student Data",data:allStudent});
+        }else{
+            return res.status(404).json({msg:"Student Data not Found",errors:err});
+        }
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({msg:"Something Wrong",errors:err});
+    }
+}
+
+module.exports.changeStudentStatus = async(req,res)=>{
+    try {
+        const result = await common.chnageStatus(req.body.id,JSON.parse(req.body.status),"Student");
+        return res.status(result.statusCode).json({msg:result.msg});
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+};
+
+
+module.exports.deleteStudent = async(req,res)=>{
+    try {
+        const result = await common.deletData(req.params.id,'Student');
+        return res.status(result.statusCode).json({msg:result.msg});
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({msg:'Something Wrong',errors:err});
     }
 }

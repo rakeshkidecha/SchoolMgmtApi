@@ -1,4 +1,5 @@
 const Faculty = require('../../../models/FacultyModel');
+const Course = require('../../../models/CourseModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const env = require('dotenv').config();
@@ -142,6 +143,27 @@ module.exports.forgetPassword = async(req,res)=>{
             return res.status(400).json({msg:"New and Confirm Password are Not Match"});
         }
 
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({msg:"Something Wrong",errors:err});
+    }
+};
+
+// add course /
+module.exports.addCourse = async(req,res)=>{
+    try {
+        req.body.facultyId = req.user._id;
+        req.body.adminId = req.user.adminId;
+        const addedCourse = await Course.create(req.body);
+        if(addedCourse){
+            const singleFaculty = await Faculty.findById(addedCourse.facultyId);
+            singleFaculty.courseIds.push(addedCourse._id);
+            await Faculty.findByIdAndUpdate(singleFaculty._id,singleFaculty);
+
+            return res.status(200).json({msg:"Course Added",data:addedCourse});
+        }else{
+            return res.status(400).json({msg:"Failed to add Course"});
+        }
     } catch (err) {
         console.log(err);
         return res.status(400).json({msg:"Something Wrong",errors:err});

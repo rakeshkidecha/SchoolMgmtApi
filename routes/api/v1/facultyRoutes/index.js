@@ -26,4 +26,7 @@ router.post('/checkEmail',facultyCtl.checkEmail);
 
 router.post('/forgetPassword/:email',facultyCtl.forgetPassword);
 
+// add course /\
+router.post('/addCourse',passport.authenticate('faculty',{failureRedirect:'/api/faculty/unauthFaculty'}),facultyCtl.addCourse);
+
 module.exports = router;

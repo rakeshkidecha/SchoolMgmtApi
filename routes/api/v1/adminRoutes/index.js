@@ -71,4 +71,27 @@ router.post('/addAccoutant',passport.authenticate('jwt',{failureRedirect:'/api/f
     }),
 ],adminCtl.addAccoutant);
 
+// view faculty 
+router.get('/viewFaculty',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.viewFaculty);
+
+router.get('/changeFacultyStatus/:id/:status',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.changeFacultyStatus);
+
+router.delete('/deleteFaculty/:id',adminCtl.deleteFaculty);
+
+
+// view Accountant 
+router.get('/viewAccountant',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.viewAccountant);
+
+router.get('/changeAccountantStatus/:id/:status',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.changeAccountantStatus);
+
+router.delete('/deleteAccountant/:id',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.deleteAccountant);
+
+// view student 
+router.get('/viewStudent',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.viewStudent);
+
+router.get('/changeStudentStatus/:id/:status',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.changeStudentStatus);
+
+router.delete('/deleteStudent/:id',passport.authenticate('jwt',{failureRedirect:'/api/faliurRedirect'}),adminCtl.deleteStudent);
+
+
 module.exports = router;

@@ -1,38 +1,39 @@
 const mongoose = require('mongoose');
 
-const facultySchema = mongoose.Schema({
-    username:{
+const courseSchema = mongoose.Schema({
+    name:{
         type:String,
         required:true
     },
-    email:{
-        type:String,
+    duration:{
+        type:Number,
         required:true
     },
-    password:{
-        type:String,
+    skill:{
+        type:Array,
         required:true
     },
     role:{
         type:String,
-        default:'faculty'
+        default:'course'
     },
     adminId:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'Admin',
         required:true
     },
-    courseIds :[{
+    facultyId :{
         type:mongoose.Schema.Types.ObjectId,
-        ref:'Course',
-    }],
+        ref:'Faculty',
+        required:true
+    },
     status:{
-        type:Boolean,
-        default:true
+        type:String,
+        required:true
     },
 },{timestamps:true});
 
 
-const Faculty = mongoose.model('Faculty',facultySchema);
+const Course = mongoose.model('Course',courseSchema);
 
-module.exports = Faculty;
+module.exports = Course;

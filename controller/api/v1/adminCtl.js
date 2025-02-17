@@ -6,6 +6,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Faculty = require('../../../models/FacultyModel');
 const Accountant = require('../../../models/AccountantModel');
+const Student = require('../../../models/StudentModel');
+const common = require('../../../services/common');
 
 function passwordGanreter(){
     const str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
@@ -268,6 +270,216 @@ module.exports.addAccoutant = async(req,res)=>{
         }
 
     } catch (err) {
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+};
+
+
+// view faculty .
+module.exports.viewFaculty = async(req,res)=>{
+    try {
+        let search = req.query.search || '';
+        let perPageData = 2
+        let page = parseInt(req.query.page) || 0;
+        
+        let sort = parseInt(req.query.sort) || null;
+        let sortType = req.query.sortType || null;
+
+        const allFaculty = await Faculty.find({
+            adminId:req.user._id,
+            $or:[
+                {username:{$regex:search,$options:'i'}},
+                {email:{$regex:search,$options:'i'}},
+            ]
+        }).sort({...(sort&&sortType&&{[sortType]:sort})}).skip(perPageData*page).limit(perPageData);
+
+        const totalFaculty = await Faculty.find({
+            adminId:req.user._id,
+            $or:[
+                {username:{$regex:search,$options:'i'}},
+                {email:{$regex:search,$options:'i'}},
+            ]
+        }).countDocuments();
+
+        const totalPage = Math.ceil(totalFaculty/perPageData);
+
+        if(allFaculty){
+            return res.status(200).json({
+                msg:"Faculty data",
+                data:allFaculty,
+                totalPage,
+                ...(totalPage>0&&{page}),
+                ...(search&&{search}),
+                ...(sort&&{sort}),
+                ...(sortType&&{sortType}),
+            });
+        }else{
+            return res.status(404).json({msg:'Faculty data not found'});
+        }
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+}
+
+module.exports.changeFacultyStatus = async(req,res)=>{
+    try {
+        const result = await common.chnageStatus(req.params.id,JSON.parse(req.params.status),'Faculty')
+        return res.status(result.statusCode).json({msg:result.msg});
+    } catch (err) {
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+};
+
+module.exports.deleteFaculty = async(req,res)=>{
+    try {
+        const result = await common.deletData(req.params.id,'Faculty');
+        return res.status(result.statusCode).json({msg:result.msg});
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+}
+
+// view Accountant .
+module.exports.viewAccountant = async(req,res)=>{
+    try {
+        let search = req.query.search || '';
+        let perPageData = 2
+        let page = parseInt(req.query.page) || 0;
+        
+        let sort = parseInt(req.query.sort) || null;
+        let sortType = req.query.sortType || null;
+
+        const allAccountant = await Accountant.find({
+            adminId:req.user._id,
+            $or:[
+                {username:{$regex:search,$options:'i'}},
+                {email:{$regex:search,$options:'i'}},
+            ]
+        }).sort({...(sort&&sortType&&{[sortType]:sort})}).skip(perPageData*page).limit(perPageData);
+
+        const totalAccountant = await Accountant.find({
+            adminId:req.user._id,
+            $or:[
+                {username:{$regex:search,$options:'i'}},
+                {email:{$regex:search,$options:'i'}},
+            ]
+        }).countDocuments();
+
+        const totalPage = Math.ceil(totalAccountant/perPageData);
+
+        if(allAccountant){
+            return res.status(200).json({
+                msg:"Accountant data",
+                data:allAccountant,
+                totalPage,
+                ...(totalPage>0&&{page}),
+                ...(search&&{search}),
+                ...(sort&&{sort}),
+                ...(sortType&&{sortType}),
+            });
+        }else{
+            return res.status(404).json({msg:'Accountant data not found'});
+        }
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+};
+
+module.exports.changeAccountantStatus =async(req,res)=>{
+    try {
+        const result = await common.chnageStatus(req.params.id,JSON.parse(req.params.status),'Accountant')
+        return res.status(result.statusCode).json({msg:result.msg});
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+};
+
+module.exports.deleteAccountant = async(req,res)=>{
+    try {
+        const deletedAccountant = await Accountant.findByIdAndDelete(req.params.id);
+        if(deletedAccountant){
+            // remove Accountant id from admin 
+            const singleAdmin = await Admin.findById(deletedAccountant.adminId);
+            singleAdmin.accountantIds.splice(singleAdmin.facultyIds.indexOf(deletedAccountant._id),1);
+            await Admin.findByIdAndUpdate(singleAdmin._id,singleAdmin);
+
+            return res.status(200).json({msg:"Accountant Deleted",data:deletedAccountant});
+        }else{
+            return res.status(400).json({msg:"Failed to delete Accountant"});
+        }
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+}
+
+// view Student .
+module.exports.viewStudent = async(req,res)=>{
+    try {
+        let search = req.query.search || '';
+        let perPageData = 2
+        let page = parseInt(req.query.page) || 0;
+        
+        let sort = parseInt(req.query.sort) || null;
+        let sortType = req.query.sortType || null;
+
+        const allStudent = await Student.find({
+            adminId:req.user._id,
+            $or:[
+                {username:{$regex:search,$options:'i'}},
+                {email:{$regex:search,$options:'i'}},
+            ]
+        }).sort({...(sort&&sortType&&{[sortType]:sort})}).skip(perPageData*page).limit(perPageData);
+
+        const totalStudent = await Student.find({
+            adminId:req.user._id,
+            $or:[
+                {username:{$regex:search,$options:'i'}},
+                {email:{$regex:search,$options:'i'}},
+            ]
+        }).countDocuments();
+
+        const totalPage = Math.ceil(totalStudent/perPageData);
+
+        if(allStudent){
+            return res.status(200).json({
+                msg:"Student data",
+                data:allStudent,
+                totalPage,
+                ...(totalPage>0&&{page}),
+                ...(search&&{search}),
+                ...(sort&&{sort}),
+                ...(sortType&&{sortType}),
+            });
+        }else{
+            return res.status(404).json({msg:'Accountant data not found'});
+        }
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+};
+
+module.exports.changeStudentStatus = async(req,res)=>{
+    try {
+        const result = await common.chnageStatus(req.params.id,JSON.parse(req.params.status),'Student')
+        return res.status(result.statusCode).json({msg:result.msg});
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({msg:'Something Wrong',errors:err});
+    }
+};
+
+module.exports.deleteStudent = async(req,res)=>{
+    try {
+        const result = await common.deletData(req.params.id,JSON.parse(req.params.status),'Student')
+        return res.status(result.statusCode).json({msg:result.msg});
+    } catch (err) {
+        console.log(err);
         return res.status(400).json({msg:'Something Wrong',errors:err});
     }
 }

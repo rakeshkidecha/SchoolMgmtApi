@@ -41,4 +41,11 @@ router.post('/addStudent',passport.authenticate('accountant',{failureRedirect:'/
     }),
 ],accCtl.addStudent);
 
+// show all Student 
+router.get('/viewStudent',passport.authenticate('accountant',{failureRedirect:'/api/accountant/unauthAccountant'}),accCtl.viewStudent);
+
+router.get('/changeStudentStatus/:id/:status',passport.authenticate('accountant',{failureRedirect:'/api/accountant/unauthAccountant'}),accCtl.changeStudentStatus);
+
+router.delete('/deleteStudent/:id',passport.authenticate('accountant',{failureRedirect:'/api/accountant/unauthAccountant'}),accCtl.deleteStudent);
+
 module.exports = router;
