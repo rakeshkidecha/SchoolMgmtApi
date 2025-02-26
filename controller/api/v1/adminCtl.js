@@ -8,6 +8,7 @@ const Faculty = require('../../../models/FacultyModel');
 const Accountant = require('../../../models/AccountantModel');
 const Student = require('../../../models/StudentModel');
 const common = require('../../../services/common');
+const passwordManage = require('../../../services/passwodManage');
 
 function passwordGanreter(){
     const str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
@@ -95,32 +96,17 @@ module.exports.editAdminProfile = async(req,res)=>{
 
 module.exports.chnageAdminPassword= async(req,res)=>{
     try {
-        const isExistAdmin = await Admin.findById(req.user._id);
-        if(!isExistAdmin){
-            return res.status(400).json({msg:"Record Not Found"});
-        };
+        const {oldPassword,newPassword,confirmPassword} = req.body;
+        const result = await passwordManage.changePassword('admin',req.user._id,oldPassword,newPassword,confirmPassword);
 
-        if(!await bcrypt.compare(req.body.currentPassword,isExistAdmin.password)){
-            return res.status(403).json({msg:'Invalid Current Password'});
-        };
-
-        if(req.body.currentPassword == req.body.newPassword){
-            return res.status(400).json({msg:"Current and New Password are Same, Please Try Anthor One"});
-        }
-
-        if(req.body.newPassword == req.body.confirmPassword){
-            const newPassword = await bcrypt.hash(req.body.newPassword,10);
-            const updateAdminPass = await Admin.findByIdAndUpdate(isExistAdmin._id,{password:newPassword});
-            if(updateAdminPass){
-                return res.status(200).json({msg:"Password Changed, Please Login for Continue"});
-            }else{
-                return res.status(400).json({msg:"Failed to Update password"});
-            }
+        if(result){
+            return res.status(result.statusCode).json({msg:result.msg});
         }else{
-            return res.status(400).json({msg:"New Password and Confirm Password are not Match"})
+            return res.status(400).json({msg:"Failed to Change Password"});
         }
 
     } catch (err) {
+        console.log(err);
         return res.status(400).json({msg:'Something Wrong',errors:err});
     }
 };
@@ -131,7 +117,6 @@ module.exports.adminLogOut = async(req,res)=>{
             if(err){
                 return res.status(400).json({msg:'Something Wrong',errors:err});
             };
-
             return res.status(200).json({msg:'Go To Login'});
         })
     } catch (err) {
@@ -142,28 +127,11 @@ module.exports.adminLogOut = async(req,res)=>{
 // forget password 
 module.exports.sendOtp = async(req,res)=>{
     try {
-        const isExistEmail = await Admin.findOne({email:req.body.email});
-
-        let OTP;
-        do {
-          OTP = Math.ceil(Math.random()*10000);  
-        } while (OTP.toString().length != 4);
-
-        if(isExistEmail){
-            const sub = "Verification OTP";
-            const content =  `<p>Your OTP for forget password is <b>${OTP}</b></p>`;
-
-            const info = await sendMailer(isExistEmail.email,sub,content);
-            
-            if(info){
-                return res.status(200).json({msg:"OTP Send on mail Successfully",data:{email:isExistEmail.email,OTP}})
-            }else{
-                return res.status(400).json({msg:'Mail not send'});
-            }
-
-
+        const result = await passwordManage.sendOtpMail('admin',req.body.email);
+        if(result){
+            return res.status(200).json({msg:'OTP Send in Mail',email:result.email,otp:result.otp});
         }else{
-            return res.status(400).json({msg:'Invalid Email'});
+            return res.status(400).json({msg:'Mail not send'});    
         }
 
     } catch (err) {
@@ -173,23 +141,14 @@ module.exports.sendOtp = async(req,res)=>{
 
 module.exports.forgetPassword = async(req,res)=>{
     try {
-        const isExistEmail = await Admin.findOne({email:req.params.email});
-        if(isExistEmail){
-            if(req.body.newPassword == req.body.confirmPassword){
-                const newPass = await bcrypt.hash(req.body.newPassword,10);
-                const updatePass = await Admin.findByIdAndUpdate(isExistEmail._id,{password:newPass});
-                if(updatePass){
-                    return res.status(200).json({msg:"Password updated, Go to Login"});
-                }else{
-                    return res.status(400).json({msg:'Password not updated'});
-                }
-            }else{
-                return res.status(400).json({msg:"New and Confirm Passsword are not Match"});
-            }
+        const result = await passwordManage.forgetPassword('admin',req.params.email,req.body.newPassword,req.body.confirmPassword);
+        if(result){
+            return res.status(result.statusCode).json({msg:result.msg});
         }else{
-            return res.status(400).json({msg:'Invalid Email'});
+            return res.status(400).json({msg:'Failed to Forget Password'});    
         }
     } catch (err) {
+        console.log(err)
         return res.status(400).json({msg:'Something Wrong',errors:err});
     }
 };

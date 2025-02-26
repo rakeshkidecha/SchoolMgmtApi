@@ -6,6 +6,7 @@ const sendMailer = require('../../../services/sendMailer');
 const { validationResult } = require("express-validator");
 const Student = require("../../../models/StudentModel");
 const common = require('../../../services/common');
+const passwodManage = require('../../../services/passwodManage');
 
 function passwordGanreter(){
     const str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
@@ -66,30 +67,15 @@ module.exports.editAccountantProfile = async(req,res)=>{
 
 module.exports.changeAccPassword = async(req,res)=>{
     try {
-        const isExistAccountant = await Accountant.findById(req.params.id);
-        if(!isExistAccountant){
-            return res.status(404).json({msg:'Accountant not Exist'}); 
-        }
+        const {oldPassword,newPassword,confirmPassword} = req.body;
+        const result = await passwodManage.changePassword('accountant',req.user._id,oldPassword,newPassword,confirmPassword);
 
-        if(!await bcrypt.compare(req.body.oldPassword,isExistAccountant.password)){
-            return res.status(403).json({msg:"Old Password Not Match"});
-        }
-
-        if(req.body.oldPassword == req.body.newPassword){
-            return res.status(403).json({msg:"Old and New Password are same Please try onthor"});
-        }
-
-        if(req.body.newPassword == req.body.confirmPassword){
-            const newPass = await bcrypt.hash(req.body.newPassword,10);
-            const updatePass = await Accountant.findByIdAndUpdate(isExistAccountant._id,{password:newPass});
-            if(updatePass){
-                return res.status(200).json({msg:"Your Password Change Successfully, For Continue Login Againg"});
-            }else{
-                return res.status(400).json({msg:"Failed To Change Password"});
-            }
+        if(result){
+            return res.status(result.statusCode).json({msg:result.msg});
         }else{
-            return res.status(403).json({msg:"New and Confirm Password are not Match"});
+            return res.status(400).json({msg:"Failed to Change Password"});
         }
+
     } catch (err) {
         return res.status(400).json({msg:"Something Wrong",errors:err});
     }
@@ -110,25 +96,11 @@ module.exports.accountantLogout = async(req,res)=>{
 
 module.exports.sendOtp = async(req,res)=>{
     try {
-        const isExistAccountant = await Accountant.findOne({email:req.body.email});
-        if(isExistAccountant){
-            let OTP;
-            do {
-                OTP = Math.floor(Math.random()*10000)
-            } while (OTP.toString().length != 4);
-
-            const sub = "Veryfication Otp";
-            const content =  `<p>Your OTP for forget password is <b>${OTP}</b></p>`;
-
-            const info =await sendMailer(isExistAccountant.email,sub,content);
-            if(info){
-                return res.status(200).json({msg:"Check your Email, Otp send in your Email",email:isExistAccountant.email,OTP});
-            }else{
-                return res.status(400).json({msg:"email not send"});
-            }
-
+        const result = await passwodManage.sendOtpMail('accountant',req.body.email);
+        if(result){
+            return res.status(200).json({msg:'OTP Send in Mail',email:result.email,otp:result.otp});
         }else{
-            return res.status(404).json({msg:"Faculty not Exist with this Email"});
+            return res.status(400).json({msg:'Mail not send'});    
         }
     } catch (err) {
         console.log(err)
@@ -138,22 +110,13 @@ module.exports.sendOtp = async(req,res)=>{
 
 module.exports.forgetPassword = async(req,res)=>{
     try {
-        const isExistAccountant = await Accountant.findOne({email:req.params.email});
-        if(!isExistAccountant){
-            return res.status(404).json({msg:'Faculty Not Faound'});
-        }
-
-        if(req.body.newPassword == req.body.confirmPassword){
-            const newPass = await bcrypt.hash(req.body.newPassword,10);
-            const updatePass = await Accountant.findByIdAndUpdate(isExistAccountant._id,{password:newPass});
-            if(updatePass){
-                return res.status(200).json({msg:"Password Forgeted, Go to Login"})
-            }else{
-                return res.status(400).json({msg:"Failed to Forget Password"});
-            }
+        const result = await passwodManage.forgetPassword('accountant',req.params.email,req.body.newPassword,req.body.confirmPassword);
+        if(result){
+            return res.status(result.statusCode).json({msg:result.msg});
         }else{
-            return res.status(400).json({msg:"New and Confirm Password are Not Match"});
+            return res.status(400).json({msg:'Failed to Forget Password'});    
         }
+        
     } catch (err) {
         console.log(err)
         return res.status(400).json({msg:"Something Wrong",errors:err});
