@@ -43,6 +43,7 @@ module.exports.registerAdmin = async(req,res)=>{
 };
 
 module.exports.adminLogin = async(req,res)=>{
+    console.log(req.body);
     try {
         let isExistAdmin = await Admin.findOne({email:req.body.email});
         if(!isExistAdmin){
