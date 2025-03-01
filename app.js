@@ -5,6 +5,9 @@ const app = express();
 const passport = require('passport');
 const jwtStrategy = require('./config/passpost_jwt_strategy');
 const session = require('express-session');
+const cors = require('cors');
+
+app.use(cors());
 
 app.use(express.urlencoded());
 
